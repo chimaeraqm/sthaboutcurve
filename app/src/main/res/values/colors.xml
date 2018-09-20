@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#F9AC19</color>
+    <color name="colorPrimaryDark">#F9AC19</color>
+    <color name="colorAccent">#f5484a</color>
+
+
+    <color name="colorOrange">#f9ac19</color>
+    <color name="colorBlack">#3C3C3C</color>
+    <color name="colorGray">#707070</color>
+    <color name="colorWhite">#FFFFFF</color>
+    <color name="colorBlue">#1989F9</color>
+    <color name="colorTrans">#00000000</color>
+
+    <color name="colorTransBlack">#60000000</color>
+
+    <color name="colorBezier2">#602828FF</color>
+    <color name="colorBezier3">#600072E3</color>
+    <color name="colorBezier4">#6000CACA</color>
+    <color name="colorBezier5">#6002Df82</color>
+    <color name="colorBezier6">#6000DB00</color>
+    <color name="colorBezier7">#608CEA00</color>
+    <color name="colorBezier8">#60C4C400</color>
+    <color name="colorBezier9">#60D9B300</color>
+    <color name="colorBezier10">#60FF8000</color>
+
+
+</resources>
