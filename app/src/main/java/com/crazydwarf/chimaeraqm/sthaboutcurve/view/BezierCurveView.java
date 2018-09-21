@@ -18,6 +18,7 @@ import android.view.animation.LinearInterpolator;
 
 
 import com.crazydwarf.chimaeraqm.sthaboutcurve.R;
+import com.crazydwarf.chimaeraqm.sthaboutcurve.dialog.PointDetailDialog;
 import com.crazydwarf.chimaeraqm.sthaboutcurve.util.UserUtil;
 
 import java.util.ArrayList;
@@ -49,7 +50,7 @@ public class BezierCurveView extends View
     private int level;
 
     /**
-     * @ param pickTag 用于标记将要移动点的序号
+     * @param pickTag 用于标记将要移动点的序号
      */
     int pickTag = -1;
 
@@ -235,6 +236,18 @@ public class BezierCurveView extends View
     }
 
     @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        int widthSpecMode = MeasureSpec.getMode(widthMeasureSpec);
+        int width = MeasureSpec.getSize(widthMeasureSpec);
+
+        int heightSpecMode = MeasureSpec.getMode(heightMeasureSpec);
+        int height = MeasureSpec.getSize(heightMeasureSpec);
+
+
+    }
+
+    @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         //mControlPointPaint绘制控制点，mTextPaint绘制控制点文字
@@ -242,7 +255,7 @@ public class BezierCurveView extends View
         {
             canvas.drawPoint(pointi.x,pointi.y,mControlPointPaint);
             int pos = mPoints.indexOf(pointi);
-            String pointText = String.format(Locale.US,"P%d",pos);
+            String pointText = String.format(Locale.US,"P%d(%.2f,%.2f)",pos,pointi.x,pointi.y);
             canvas.drawText(pointText,pointi.x,pointi.y,mTextPaint);
         }
 
@@ -291,6 +304,7 @@ public class BezierCurveView extends View
                 adsPoints.add(backupAdsPoints.get(m));
             }
             backupAdsPoints.clear();
+
         }
 
 
@@ -307,6 +321,8 @@ public class BezierCurveView extends View
             canvas.drawPath(mBezierPath,mBezierPaint);
             PointF tailPoint = drawPoints.get(drawPoints.size()-1);
             canvas.drawPoint(tailPoint.x,tailPoint.y,mBezierPointPaint);
+            String bezierPointCoor = String.format(Locale.US,"(%.2f,%.2f)",tailPoint.x,tailPoint.y);
+            canvas.drawText(bezierPointCoor,tailPoint.x,tailPoint.y,mTextPaint);
         }
     }
 
@@ -367,6 +383,11 @@ public class BezierCurveView extends View
 
     }
 
+    /**
+     * @param eventx,eventy 记录鼠标点击下去的坐标信息
+     */
+    private float eventx;
+    private float eventy;
     @Override
     public boolean onTouchEvent(MotionEvent event)
     {
@@ -380,8 +401,8 @@ public class BezierCurveView extends View
                 for(int i=0;i<mPoints.size();i++)
                 {
                     PointF pointF = mPoints.get(i);
-                    float eventx = event.getX();
-                    float eventy = event.getY();
+                    eventx = event.getX();
+                    eventy = event.getY();
                     if(i == 0)
                     {
                         distance = UserUtil.distanceBetween(pointF.x,pointF.y,eventx,eventy);
@@ -408,8 +429,26 @@ public class BezierCurveView extends View
                     invalidate();
                 }
                 break;
+            case MotionEvent.ACTION_UP:
+                long downTime = event.getDownTime();
+                long eventTime = event.getEventTime();
+                long interval = eventTime-downTime;
+                if(interval > 300)
+                {
+                    float upx = event.getX();
+                    float upy = event.getY();
+                    float moveDist = UserUtil.distanceBetween(eventx,eventy,upx,upy);
+                    if(moveDist < 15)
+                    {
+                        PointDetailDialog pointDetailDialog = new PointDetailDialog(mContext);
+                        pointDetailDialog.show();
+                    }
+                }
+                break;
+
                 default:
                     break;
+
         }
         return true;
     }
