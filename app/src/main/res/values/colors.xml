@@ -13,6 +13,7 @@
     <color name="colorTrans">#00000000</color>
 
     <color name="colorTransBlack">#60000000</color>
+    <color name="colorTransGray">#60707070</color>
 
     <color name="colorBezier2">#602828FF</color>
     <color name="colorBezier3">#600072E3</color>

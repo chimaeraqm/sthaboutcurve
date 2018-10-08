@@ -5,9 +5,12 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PointF;
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.res.ComplexColorCompat;
@@ -79,6 +82,10 @@ public class BezierCurveView extends View
     private Path mBezierPath;
     private Path mAdsLinePath;
 
+    private Paint mGridPaint;
+    private float mGridGap_Width;
+    private float mGridGap_Height;
+
     public BezierCurveView(Context context) {
         super(context);
         this.mContext = context;
@@ -100,7 +107,9 @@ public class BezierCurveView extends View
     void initView()
     {
         if(level < 2)
+        {
             return;
+        }
 
         if(mPoints.size() != level+1)
         {
@@ -171,7 +180,6 @@ public class BezierCurveView extends View
             mBezierPath = new Path();
             mAdsLinePath = new Path();
 
-
             constValue = null;
             if(level == 2)
             {
@@ -209,6 +217,14 @@ public class BezierCurveView extends View
             {
                 constValue = new int[]{1,10,45,120,200,252,200,120,45,10,1};
             }
+
+            mGridPaint = new Paint();
+            mGridPaint.setColor(ContextCompat.getColor(mContext,R.color.colorTransGray));
+            mGridPaint.setStrokeWidth(4);
+            mGridPaint.setStyle(Paint.Style.STROKE);
+            mGridPaint.setAntiAlias(true);
+            mGridPaint.setStrokeCap(Paint.Cap.ROUND);
+            mGridPaint.setPathEffect(new DashPathEffect(new float[]{10,5},0));
         }
 
         if(mPoints.size() != level+1 || initCheck == true)
@@ -235,16 +251,61 @@ public class BezierCurveView extends View
     }
 
     @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        int width = MeasureSpec.getSize(widthMeasureSpec);
+        int height = MeasureSpec.getSize(heightMeasureSpec);
+        mGridGap_Width = width/10.0f;
+        mGridGap_Height = height/10.0f;
+    }
+
+    @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        float gridWidth_a = mGridGap_Width;
+        float gridHeight_a = mGridGap_Height;
+        Path gridPath = new Path();
+        for(int i=0;i<9;i++)
+        {
+            //用纵横虚线划分绘图区域
+            gridPath.moveTo(gridWidth_a,0);
+            float height = getHeight();
+            gridPath.lineTo(gridWidth_a,height);
+            canvas.drawPath(gridPath,mGridPaint);
+            gridPath.reset();
+
+            gridPath.moveTo(0,gridHeight_a);
+            float width = getWidth();
+            gridPath.lineTo(width,gridHeight_a);
+            canvas.drawPath(gridPath,mGridPaint);
+            gridPath.reset();
+
+            gridWidth_a += mGridGap_Width;
+            gridHeight_a += mGridGap_Height;
+        }
         //mControlPointPaint绘制控制点，mTextPaint绘制控制点文字
         for(PointF pointi : mPoints)
         {
             canvas.drawPoint(pointi.x,pointi.y,mControlPointPaint);
             int pos = mPoints.indexOf(pointi);
-            String pointText = String.format(Locale.US,"P%d",pos);
-            canvas.drawText(pointText,pointi.x,pointi.y,mTextPaint);
+            String pointText = String.format(Locale.US,"P%d(%.2f,%.2f)",pos,pointi.x,pointi.y);
+            //获取String边界，校正String显示位置
+            Rect textRect = new Rect();
+            mTextPaint.getTextBounds(pointText,0,pointText.length(),textRect);
+            if((pointi.x + textRect.width()) > getWidth())
+            {
+                float startX =  getWidth() - textRect.width();
+                canvas.drawText(pointText,startX,pointi.y,mTextPaint);
+            }
+            else
+            {
+                canvas.save();
+                canvas.rotate(-45,pointi.x,pointi.y);
+                canvas.drawText(pointText,pointi.x,pointi.y,mTextPaint);
+                canvas.restore();
+            }
         }
+
 
         //mControlLinePaint沿mControlPath绘制辅助线
         mControlPath.reset();
@@ -292,7 +353,6 @@ public class BezierCurveView extends View
             }
             backupAdsPoints.clear();
         }
-
 
         //mBezierPaint沿mBezierPath绘制bezier曲线,mBezierPointPaint绘制bezier曲线尾点
         mBezierPath.reset();
