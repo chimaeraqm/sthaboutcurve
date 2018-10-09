@@ -86,6 +86,16 @@ public class BezierCurveView extends View
     private float mGridGap_Width;
     private float mGridGap_Height;
 
+    //记录action_down时操作点的位置(lastPointX,lastPointY)，以及action_move后点的位置(thisPointX,thisPointY)
+    //并由两位置间移动的距离及时间判断是否为长按事件
+    private boolean mIsLongPressed = false;
+    private float lastPointX = 0;
+    private float lastPointY = 0;
+    private float thisPointX = 0;
+    private float thisPointY = 0;
+    private long lastDownTime = 0;
+    private long thisEventTime = 0;
+
     public BezierCurveView(Context context) {
         super(context);
         this.mContext = context;
@@ -437,19 +447,20 @@ public class BezierCurveView extends View
         switch (event.getAction())
         {
             case MotionEvent.ACTION_DOWN:
+                lastPointX = event.getX();
+                lastPointY = event.getY();
+                lastDownTime = event.getDownTime();
                 for(int i=0;i<mPoints.size();i++)
                 {
                     PointF pointF = mPoints.get(i);
-                    float eventx = event.getX();
-                    float eventy = event.getY();
                     if(i == 0)
                     {
-                        distance = UserUtil.distanceBetween(pointF.x,pointF.y,eventx,eventy);
+                        distance = UserUtil.distanceBetween(pointF.x,pointF.y,lastPointX,lastPointY);
                         pickTag = 0;
                     }
                     else
                     {
-                        float newdist = UserUtil.distanceBetween(pointF.x,pointF.y,eventx,eventy);
+                        float newdist = UserUtil.distanceBetween(pointF.x,pointF.y,lastPointX,lastPointY);
                         if(newdist < distance)
                         {
                             distance = newdist;
@@ -460,14 +471,33 @@ public class BezierCurveView extends View
                 break;
 
             case MotionEvent.ACTION_MOVE:
+                thisPointX = event.getX();
+                thisPointY = event.getY();
+                thisEventTime = event.getEventTime();
+                //判断是否为长按事件
+                if(!mIsLongPressed)
+                {
+                    mIsLongPressed = isLongPressed(lastPointX,lastPointY,thisPointX,thisPointY,lastDownTime,thisEventTime,500);
+                }
+                //长按事件弹出对应点坐标编辑对话框
+                //非长按事件移动点至点击位置
                 if(pickTag > -1)
                 {
-                    PointF point1 = mPoints.get(pickTag);
-                    point1.x = event.getX();
-                    point1.y = event.getY();
-                    invalidate();
+                    if(mIsLongPressed)
+                    {
+
+                    }
+                    else
+                    {
+                        PointF point1 = mPoints.get(pickTag);
+                        point1.x = thisPointX;
+                        point1.y = thisPointY;
+                        invalidate();
+                    }
                 }
                 break;
+            case MotionEvent.ACTION_UP:
+                mIsLongPressed = false;
                 default:
                     break;
         }
@@ -488,6 +518,17 @@ public class BezierCurveView extends View
     public void setLevel(int level) {
         this.level = level;
         initView();
+    }
+
+    //判断是否为长按时间
+    static boolean isLongPressed(float lastX, float lastY, float thisX, float thisY, long lastDownTime, long thisEventTime,	long longPressTime) {
+        float offsetX = Math.abs(thisX - lastX);
+        float offsetY = Math.abs(thisY - lastY);
+        long intervalTime = thisEventTime - lastDownTime;
+        if (offsetX <= 10 && offsetY <= 10 && intervalTime >= longPressTime) {
+            return true;
+        }
+        return false;
     }
 
     public float getT() {
