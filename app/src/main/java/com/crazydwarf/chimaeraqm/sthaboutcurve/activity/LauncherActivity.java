@@ -20,8 +20,8 @@ public class LauncherActivity extends AppCompatActivity
         tv_GetIn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-//                Intent intent = new Intent(LauncherActivity.this,MainActivity.class);
-                Intent intent = new Intent(LauncherActivity.this,MainActivity.class);
+                //Intent intent = new Intent(LauncherActivity.this,MainActivity.class);
+                Intent intent = new Intent(LauncherActivity.this,GeneticAlgorithmActivity.class);
                 intent.putExtra("LOGIN",false);
                 startActivity(intent);
                 finish();
@@ -33,8 +33,8 @@ public class LauncherActivity extends AppCompatActivity
         im_GetIn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(LauncherActivity.this,MainActivity.class);
-//                Intent intent = new Intent(LauncherActivity.this,RecycleviewTestActivity.class);
+//                Intent intent = new Intent(LauncherActivity.this,MainActivity.class);
+                Intent intent = new Intent(LauncherActivity.this,GeneticAlgorithmActivity.class);
                 intent.putExtra("LOGIN",false);
                 startActivity(intent);
                 finish();
