@@ -9,7 +9,7 @@
         android:roundIcon="@drawable/icon_round"
         android:supportsRtl="true"
         android:theme="@style/CurrentAppTheme">
-        <activity android:name=".activity.MainActivity">
+        <activity android:name=".activity.GeneticAlgorithmActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

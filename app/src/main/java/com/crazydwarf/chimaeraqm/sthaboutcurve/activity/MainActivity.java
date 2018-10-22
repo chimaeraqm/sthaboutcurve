@@ -99,7 +99,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-        //BezierCurveView im_drawable = findViewById(R.id.im_drawable_view);
     }
 
     void initFragments()
