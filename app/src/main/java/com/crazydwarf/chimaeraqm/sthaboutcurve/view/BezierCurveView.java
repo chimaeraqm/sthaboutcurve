@@ -5,9 +5,12 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PointF;
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.res.ComplexColorCompat;
@@ -18,7 +21,6 @@ import android.view.animation.LinearInterpolator;
 
 
 import com.crazydwarf.chimaeraqm.sthaboutcurve.R;
-import com.crazydwarf.chimaeraqm.sthaboutcurve.dialog.PointDetailDialog;
 import com.crazydwarf.chimaeraqm.sthaboutcurve.util.UserUtil;
 
 import java.util.ArrayList;
@@ -50,7 +52,7 @@ public class BezierCurveView extends View
     private int level;
 
     /**
-     * @param pickTag 用于标记将要移动点的序号
+     * @ param pickTag 用于标记将要移动点的序号
      */
     int pickTag = -1;
 
@@ -80,6 +82,20 @@ public class BezierCurveView extends View
     private Path mBezierPath;
     private Path mAdsLinePath;
 
+    private Paint mGridPaint;
+    private float mGridGap_Width;
+    private float mGridGap_Height;
+
+    //记录action_down时操作点的位置(lastPointX,lastPointY)，以及action_move后点的位置(thisPointX,thisPointY)
+    //并由两位置间移动的距离及时间判断是否为长按事件
+    private boolean mIsLongPressed = false;
+    private float lastPointX = 0;
+    private float lastPointY = 0;
+    private float thisPointX = 0;
+    private float thisPointY = 0;
+    private long lastDownTime = 0;
+    private long thisEventTime = 0;
+
     public BezierCurveView(Context context) {
         super(context);
         this.mContext = context;
@@ -101,7 +117,9 @@ public class BezierCurveView extends View
     void initView()
     {
         if(level < 2)
+        {
             return;
+        }
 
         if(mPoints.size() != level+1)
         {
@@ -172,7 +190,6 @@ public class BezierCurveView extends View
             mBezierPath = new Path();
             mAdsLinePath = new Path();
 
-
             constValue = null;
             if(level == 2)
             {
@@ -210,6 +227,14 @@ public class BezierCurveView extends View
             {
                 constValue = new int[]{1,10,45,120,200,252,200,120,45,10,1};
             }
+
+            mGridPaint = new Paint();
+            mGridPaint.setColor(ContextCompat.getColor(mContext,R.color.colorTransGray));
+            mGridPaint.setStrokeWidth(4);
+            mGridPaint.setStyle(Paint.Style.STROKE);
+            mGridPaint.setAntiAlias(true);
+            mGridPaint.setStrokeCap(Paint.Cap.ROUND);
+            mGridPaint.setPathEffect(new DashPathEffect(new float[]{10,5},0));
         }
 
         if(mPoints.size() != level+1 || initCheck == true)
@@ -238,26 +263,59 @@ public class BezierCurveView extends View
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        int widthSpecMode = MeasureSpec.getMode(widthMeasureSpec);
         int width = MeasureSpec.getSize(widthMeasureSpec);
-
-        int heightSpecMode = MeasureSpec.getMode(heightMeasureSpec);
         int height = MeasureSpec.getSize(heightMeasureSpec);
-
-
+        mGridGap_Width = width/10.0f;
+        mGridGap_Height = height/10.0f;
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        float gridWidth_a = mGridGap_Width;
+        float gridHeight_a = mGridGap_Height;
+        Path gridPath = new Path();
+        for(int i=0;i<9;i++)
+        {
+            //用纵横虚线划分绘图区域
+            gridPath.moveTo(gridWidth_a,0);
+            float height = getHeight();
+            gridPath.lineTo(gridWidth_a,height);
+            canvas.drawPath(gridPath,mGridPaint);
+            gridPath.reset();
+
+            gridPath.moveTo(0,gridHeight_a);
+            float width = getWidth();
+            gridPath.lineTo(width,gridHeight_a);
+            canvas.drawPath(gridPath,mGridPaint);
+            gridPath.reset();
+
+            gridWidth_a += mGridGap_Width;
+            gridHeight_a += mGridGap_Height;
+        }
         //mControlPointPaint绘制控制点，mTextPaint绘制控制点文字
         for(PointF pointi : mPoints)
         {
             canvas.drawPoint(pointi.x,pointi.y,mControlPointPaint);
             int pos = mPoints.indexOf(pointi);
             String pointText = String.format(Locale.US,"P%d(%.2f,%.2f)",pos,pointi.x,pointi.y);
-            canvas.drawText(pointText,pointi.x,pointi.y,mTextPaint);
+            //获取String边界，校正String显示位置
+            Rect textRect = new Rect();
+            mTextPaint.getTextBounds(pointText,0,pointText.length(),textRect);
+            if((pointi.x + textRect.width()) > getWidth())
+            {
+                float startX =  getWidth() - textRect.width();
+                canvas.drawText(pointText,startX,pointi.y,mTextPaint);
+            }
+            else
+            {
+                canvas.save();
+                canvas.rotate(-45,pointi.x,pointi.y);
+                canvas.drawText(pointText,pointi.x,pointi.y,mTextPaint);
+                canvas.restore();
+            }
         }
+
 
         //mControlLinePaint沿mControlPath绘制辅助线
         mControlPath.reset();
@@ -304,9 +362,7 @@ public class BezierCurveView extends View
                 adsPoints.add(backupAdsPoints.get(m));
             }
             backupAdsPoints.clear();
-
         }
-
 
         //mBezierPaint沿mBezierPath绘制bezier曲线,mBezierPointPaint绘制bezier曲线尾点
         mBezierPath.reset();
@@ -321,8 +377,6 @@ public class BezierCurveView extends View
             canvas.drawPath(mBezierPath,mBezierPaint);
             PointF tailPoint = drawPoints.get(drawPoints.size()-1);
             canvas.drawPoint(tailPoint.x,tailPoint.y,mBezierPointPaint);
-            String bezierPointCoor = String.format(Locale.US,"(%.2f,%.2f)",tailPoint.x,tailPoint.y);
-            canvas.drawText(bezierPointCoor,tailPoint.x,tailPoint.y,mTextPaint);
         }
     }
 
@@ -383,11 +437,6 @@ public class BezierCurveView extends View
 
     }
 
-    /**
-     * @param eventx,eventy 记录鼠标点击下去的坐标信息
-     */
-    private float eventx;
-    private float eventy;
     @Override
     public boolean onTouchEvent(MotionEvent event)
     {
@@ -398,19 +447,20 @@ public class BezierCurveView extends View
         switch (event.getAction())
         {
             case MotionEvent.ACTION_DOWN:
+                lastPointX = event.getX();
+                lastPointY = event.getY();
+                lastDownTime = event.getDownTime();
                 for(int i=0;i<mPoints.size();i++)
                 {
                     PointF pointF = mPoints.get(i);
-                    eventx = event.getX();
-                    eventy = event.getY();
                     if(i == 0)
                     {
-                        distance = UserUtil.distanceBetween(pointF.x,pointF.y,eventx,eventy);
+                        distance = UserUtil.distanceBetween(pointF.x,pointF.y,lastPointX,lastPointY);
                         pickTag = 0;
                     }
                     else
                     {
-                        float newdist = UserUtil.distanceBetween(pointF.x,pointF.y,eventx,eventy);
+                        float newdist = UserUtil.distanceBetween(pointF.x,pointF.y,lastPointX,lastPointY);
                         if(newdist < distance)
                         {
                             distance = newdist;
@@ -421,34 +471,35 @@ public class BezierCurveView extends View
                 break;
 
             case MotionEvent.ACTION_MOVE:
+                thisPointX = event.getX();
+                thisPointY = event.getY();
+                thisEventTime = event.getEventTime();
+                //判断是否为长按事件
+                if(!mIsLongPressed)
+                {
+                    mIsLongPressed = isLongPressed(lastPointX,lastPointY,thisPointX,thisPointY,lastDownTime,thisEventTime,500);
+                }
+                //长按事件弹出对应点坐标编辑对话框
+                //非长按事件移动点至点击位置
                 if(pickTag > -1)
                 {
-                    PointF point1 = mPoints.get(pickTag);
-                    point1.x = event.getX();
-                    point1.y = event.getY();
-                    invalidate();
-                }
-                break;
-            case MotionEvent.ACTION_UP:
-                long downTime = event.getDownTime();
-                long eventTime = event.getEventTime();
-                long interval = eventTime-downTime;
-                if(interval > 300)
-                {
-                    float upx = event.getX();
-                    float upy = event.getY();
-                    float moveDist = UserUtil.distanceBetween(eventx,eventy,upx,upy);
-                    if(moveDist < 15)
+                    if(mIsLongPressed)
                     {
-                        PointDetailDialog pointDetailDialog = new PointDetailDialog(mContext);
-                        pointDetailDialog.show();
+
+                    }
+                    else
+                    {
+                        PointF point1 = mPoints.get(pickTag);
+                        point1.x = thisPointX;
+                        point1.y = thisPointY;
+                        invalidate();
                     }
                 }
                 break;
-
+            case MotionEvent.ACTION_UP:
+                mIsLongPressed = false;
                 default:
                     break;
-
         }
         return true;
     }
@@ -467,6 +518,17 @@ public class BezierCurveView extends View
     public void setLevel(int level) {
         this.level = level;
         initView();
+    }
+
+    //判断是否为长按时间
+    static boolean isLongPressed(float lastX, float lastY, float thisX, float thisY, long lastDownTime, long thisEventTime,	long longPressTime) {
+        float offsetX = Math.abs(thisX - lastX);
+        float offsetY = Math.abs(thisY - lastY);
+        long intervalTime = thisEventTime - lastDownTime;
+        if (offsetX <= 10 && offsetY <= 10 && intervalTime >= longPressTime) {
+            return true;
+        }
+        return false;
     }
 
     public float getT() {
