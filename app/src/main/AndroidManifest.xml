@@ -9,13 +9,19 @@
         android:roundIcon="@drawable/icon_round"
         android:supportsRtl="true"
         android:theme="@style/CurrentAppTheme">
-        <activity android:name=".activity.GeneticAlgorithmActivity">
+        <activity android:name=".activity.LauncherActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".activity.MainActivity"
+            android:screenOrientation="portrait">
+        </activity>
+
     </application>
 
 </manifest>

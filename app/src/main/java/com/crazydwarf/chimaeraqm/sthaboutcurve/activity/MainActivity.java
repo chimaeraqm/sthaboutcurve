@@ -11,7 +11,10 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
+import android.widget.ImageView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.crazydwarf.chimaeraqm.sthaboutcurve.R;
 import com.crazydwarf.chimaeraqm.sthaboutcurve.fragment.BezierCurveFragment;
 import com.crazydwarf.chimaeraqm.sthaboutcurve.view.CommonAdapter;
@@ -98,7 +101,12 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-
+        ImageView imDrawerheader = findViewById(R.id.im_drawerheader);
+        Glide.with(MainActivity.this)
+                .load(R.drawable.drawerheader_w800)
+                .apply(new RequestOptions()
+                        .centerCrop())
+                .into(imDrawerheader);
     }
 
     void initFragments()

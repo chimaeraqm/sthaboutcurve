@@ -14,21 +14,31 @@
         android:layout_marginStart="8dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/im_drawerheader"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/list_dl"
+        app:layout_constraintEnd_toEndOf="@+id/im_dl_top"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@color/colorGray" />
 
     <TextView
+        android:padding="8dp"
         android:id="@+id/im_dl_top"
         android:layout_width="0dp"
-        android:layout_height="100dp"
-        android:text="Choose Curve Type here.\n Then click SIMU."
-        android:textSize="20sp"
-        android:textColor="@color/colorGray"
-        android:gravity="center"
-        android:background="@color/colorWhite"
+        android:layout_height="140dp"
+        android:gravity="right|bottom"
+        android:text="Choose Curve Type here.\nThen click SIMU."
+        android:textColor="@color/colorWhite"
+        android:textSize="16sp"
+        android:background="@color/colorTrans"
+        app:layout_constraintBottom_toTopOf="@+id/list_dl"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imageView7" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <ImageView
         android:id="@+id/imageView6"
